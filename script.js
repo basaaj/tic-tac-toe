@@ -30,7 +30,20 @@ function Gameboard() {
         console.log(boardWithCellValues);
     };
 
-    return { getBoard, placeToken, printBoard };
+    const checkColumn = (column, player) => {
+        let win = true;
+
+        for (let row = 0; row < board.length; row++) {
+            let cellVal = board[row][column].getValue();
+            if (cellVal !== player) {
+                win = false;
+            }
+        }
+
+        return win;
+    }
+
+    return { getBoard, placeToken, printBoard, checkColumn };
 }
 
 function Cell() {
@@ -51,11 +64,13 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
     const players = [
         {
             name: playerOneName,
-            token: "O"
+            token: "O",
+            winner: false
         },
         {
             name: playerTwoName,
-            token: "X"
+            token: "X",
+            winner: false
         }
     ];
 
@@ -67,6 +82,10 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
 
     const getActivePlayer = () => activePlayer;
 
+    const setWinner = () => {
+        activePlayer.winner = true;
+    }
+
     const printNewRound = () => {
         board.printBoard();
         console.log(`${getActivePlayer().name}'s turn.`);
@@ -74,11 +93,19 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
 
     const playRound = (row, column) => {
         if (board.placeToken(row, column, getActivePlayer().token)) {
-            // Switch player turn
-            switchPlayerTurn();
-            printNewRound();
-
             //TODO: Check if anyone won and relay msg
+            if (board.checkColumn(column, getActivePlayer().token)) {
+                setWinner();
+
+                //TODO: Disable game or immediately restart
+            }
+
+            else {
+                // Switch player turn
+                switchPlayerTurn();
+            }
+            
+            printNewRound();
         }
     };
 
@@ -103,7 +130,13 @@ function ScreenController() {
         const activePlayer = game.getActivePlayer();
 
         // Display player's turn
-        playerTurnDiv.textContent = `${activePlayer.name}'s turn...`;
+        if (activePlayer.winner) {
+            playerTurnDiv.textContent = `${activePlayer.name} won!`;
+        }
+
+        else {
+            playerTurnDiv.textContent = `${activePlayer.name}'s turn...`;
+        }
 
         // Render board squares
         board.forEach((row, rowIndex) => {
