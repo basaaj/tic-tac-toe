@@ -34,8 +34,7 @@ function Gameboard() {
         let win = true;
 
         for (let row = 0; row < board.length; row++) {
-            let cellVal = board[row][column].getValue();
-            if (cellVal !== player) {
+            if (board[row][column].getValue() !== player) {
                 win = false;
             }
         }
@@ -43,7 +42,48 @@ function Gameboard() {
         return win;
     }
 
-    return { getBoard, placeToken, printBoard, checkColumn };
+    const checkRow = (row, player) => {
+        let win = true;
+
+        for (let col = 0; col < board.length; col++) {
+            if (board[row][col].getValue() !== player) {
+                win = false;
+            }
+        }
+
+        return win;
+    }
+
+    const checkDiagonal = (row, column, player) => {
+        let win = true;
+        let win1 = true;
+        let currRow = parseInt(row, 10);
+        let currCol = parseInt(column, 10);
+
+        // downward diagonal
+        for (let i = 0; i < board.length; i++) {
+            currRow = (currRow + 1) % 3;
+            currCol = (currCol + 1) % 3;
+            let cellVal = board[currRow][currCol].getValue();
+            if (cellVal !== player) {
+                win = false;
+            }
+        }
+
+        // upward diagonal
+        for (let i = 0; i < board.length; i++) {
+            currRow = Math.abs((currRow + 1) % 3);
+            currCol = currCol === 0 ? 2 : Math.abs((currCol - 1) % 3);
+            let cellVal = board[currRow][currCol].getValue();
+            if (cellVal !== player) {
+                win1 = false;
+            }
+        }
+
+        return win || win1;
+    }
+
+    return { getBoard, placeToken, printBoard, checkColumn, checkRow, checkDiagonal };
 }
 
 function Cell() {
@@ -94,7 +134,9 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
     const playRound = (row, column) => {
         if (board.placeToken(row, column, getActivePlayer().token)) {
             //TODO: Check if anyone won and relay msg
-            if (board.checkColumn(column, getActivePlayer().token)) {
+            if (board.checkColumn(column, getActivePlayer().token) ||
+                board.checkRow(row, getActivePlayer().token) ||
+                board.checkDiagonal(row, column, getActivePlayer().token)) {
                 setWinner();
 
                 //TODO: Disable game or immediately restart
