@@ -12,6 +12,14 @@ function Gameboard() {
 
     const getBoard = () => board;
 
+    const clearBoard = () => {
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < columns; j++) {
+                board[i][j].resetValue();
+            }
+        }
+    };
+
     const placeToken = (row, column, player) => {
         if(board[row][column].getValue() === "") {
             board[row][column].addToken(player);
@@ -83,7 +91,7 @@ function Gameboard() {
         return win || win1;
     }
 
-    return { getBoard, placeToken, printBoard, checkColumn, checkRow, checkDiagonal };
+    return { getBoard, placeToken, printBoard, checkColumn, checkRow, checkDiagonal, clearBoard };
 }
 
 function Cell() {
@@ -95,7 +103,11 @@ function Cell() {
 
     const getValue = () => value;
 
-    return { addToken, getValue };
+    const resetValue = () => {
+        value = "";
+    };
+
+    return { addToken, getValue, resetValue };
 }
 
 function GameController(playerOneName = "Player One", playerTwoName = "Player Two") {
@@ -155,13 +167,14 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
     printNewRound();
 
     // TODO: getActivePlayer is needed when UI is implemented
-    return { playRound, getActivePlayer, getBoard: board.getBoard };
+    return { playRound, getActivePlayer, getBoard: board.getBoard, clearBoard: board.clearBoard };
 }
   
 function ScreenController() {
     const game = GameController();
     const playerTurnDiv = document.querySelector('.turn');
     const boardDiv = document.querySelector('.board');
+    const reset = document.querySelector('#reset');
   
     const updateScreen = () => {
         // clear the board
@@ -209,6 +222,11 @@ function ScreenController() {
   
     // Initial render
     updateScreen();
+
+    reset.addEventListener('click', () => {
+        game.clearBoard();
+        updateScreen();
+    });
 }
   
 ScreenController();
