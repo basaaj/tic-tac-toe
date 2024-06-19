@@ -30,7 +30,6 @@ function Gameboard() {
         }
 
         else {
-            console.log("You can't pick a non-empty cell!");
             return false;
         }
     };
@@ -127,10 +126,14 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
 }
   
 function ScreenController() {
-    const game = GameController();
+    let game = GameController();
     const playerTurnDiv = document.querySelector('.turn');
     const boardDiv = document.querySelector('.board');
     const reset = document.querySelector('#reset');
+    const playerForm = document.querySelector('dialog');
+    const player1 = document.querySelector('#player-1');
+    const player2 = document.querySelector('#player-2');
+    const start = document.querySelector('#start');
   
     const updateScreen = () => {
         // clear the board
@@ -171,8 +174,13 @@ function ScreenController() {
 
         boardDiv.addEventListener("click", clickHandlerBoard);
     }
-  
-    // Initial render
+
+    start.addEventListener('click', () => {
+        game = GameController(player1.value, player2.value);
+        updateScreen();
+    });
+
+    playerForm.showModal();
     updateScreen();
 
     reset.addEventListener('click', () => {
