@@ -1,28 +1,31 @@
 function Gameboard() {
-    const rows = 3;
-    const columns = 3;
     const board = [];
+    const winningConditions= [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6]
+    ];
 
-    for (let i = 0; i < rows; i++) {
-        board[i] = [];
-        for (let j = 0; j < columns; j++) {
-            board[i].push(Cell());
-        }
+    for (let i = 0; i < 9; i++) {
+        board.push(Cell());
     }
 
     const getBoard = () => board;
 
     const clearBoard = () => {
-        for (let i = 0; i < rows; i++) {
-            for (let j = 0; j < columns; j++) {
-                board[i][j].resetValue();
-            }
+        for (let i = 0; i < board.length; i++) {
+            board[i].resetValue();
         }
     };
 
-    const placeToken = (row, column, player) => {
-        if(board[row][column].getValue() === "") {
-            board[row][column].addToken(player);
+    const placeToken = (index, player) => {
+        if(board[index].getValue() === "") {
+            board[index].addToken(player);
             return true;
         }
 
@@ -32,66 +35,24 @@ function Gameboard() {
         }
     };
 
-    // TODO: to remove after implementing UI
-    const printBoard = () => {
-        const boardWithCellValues = board.map((row) => row.map((cell) => cell.getValue()));
-        console.log(boardWithCellValues);
+    const checkWin = (player) => {
+        let roundWon = false;
+        for (let i = 0; i < winningConditions.length; i++) {
+            const winCondition = winningConditions[i];
+            let a = board[winCondition[0]].getValue();
+            let b = board[winCondition[1]].getValue();
+            let c = board[winCondition[2]].getValue();
+
+            if (a === b && b === c && a === player) {
+                roundWon = true;
+                break;
+            }
+        }
+
+        return roundWon;
     };
 
-    const checkColumn = (column, player) => {
-        let win = true;
-
-        for (let row = 0; row < board.length; row++) {
-            if (board[row][column].getValue() !== player) {
-                win = false;
-            }
-        }
-
-        return win;
-    }
-
-    const checkRow = (row, player) => {
-        let win = true;
-
-        for (let col = 0; col < board.length; col++) {
-            if (board[row][col].getValue() !== player) {
-                win = false;
-            }
-        }
-
-        return win;
-    }
-
-    const checkDiagonal = (row, column, player) => {
-        let win = true;
-        let win1 = true;
-        let currRow = parseInt(row, 10);
-        let currCol = parseInt(column, 10);
-
-        // downward diagonal
-        for (let i = 0; i < board.length; i++) {
-            currRow = (currRow + 1) % 3;
-            currCol = (currCol + 1) % 3;
-            let cellVal = board[currRow][currCol].getValue();
-            if (cellVal !== player) {
-                win = false;
-            }
-        }
-
-        // upward diagonal
-        for (let i = 0; i < board.length; i++) {
-            currRow = Math.abs((currRow + 1) % 3);
-            currCol = currCol === 0 ? 2 : Math.abs((currCol - 1) % 3);
-            let cellVal = board[currRow][currCol].getValue();
-            if (cellVal !== player) {
-                win1 = false;
-            }
-        }
-
-        return win || win1;
-    }
-
-    return { getBoard, placeToken, printBoard, checkColumn, checkRow, checkDiagonal, clearBoard };
+    return { getBoard, placeToken, checkWin, clearBoard };
 }
 
 function Cell() {
@@ -138,17 +99,9 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
         activePlayer.winner = true;
     }
 
-    const printNewRound = () => {
-        board.printBoard();
-        console.log(`${getActivePlayer().name}'s turn.`);
-    };
-
-    const playRound = (row, column) => {
-        if (board.placeToken(row, column, getActivePlayer().token)) {
-            //TODO: Check if anyone won and relay msg
-            if (board.checkColumn(column, getActivePlayer().token) ||
-                board.checkRow(row, getActivePlayer().token) ||
-                board.checkDiagonal(row, column, getActivePlayer().token)) {
+    const playRound = (index) => {
+        if (board.placeToken(index, getActivePlayer().token)) {
+            if (board.checkWin(getActivePlayer().token)) {
                 setWinner();
 
                 //TODO: Disable game or immediately restart
@@ -158,15 +111,9 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
                 // Switch player turn
                 switchPlayerTurn();
             }
-            
-            printNewRound();
         }
     };
 
-    // Initial play game message
-    printNewRound();
-
-    // TODO: getActivePlayer is needed when UI is implemented
     return { playRound, getActivePlayer, getBoard: board.getBoard, clearBoard: board.clearBoard };
 }
   
@@ -194,26 +141,22 @@ function ScreenController() {
         }
 
         // Render board squares
-        board.forEach((row, rowIndex) => {
-            row.forEach((cell, colIndex) => {
-                const cellButton = document.createElement("button");
-                cellButton.classList.add("cell");
+        board.forEach((cell, index) => {
+            const cellButton = document.createElement("button");
+            cellButton.classList.add("cell");
 
-                cellButton.dataset.column = colIndex;
-                cellButton.dataset.row = rowIndex;
-                cellButton.textContent = cell.getValue();
-                boardDiv.appendChild(cellButton);
-            });
+            cellButton.dataset.index = index;
+            cellButton.textContent = cell.getValue();
+            boardDiv.appendChild(cellButton);
         });
         
          // Add event listener for the board
         function clickHandlerBoard(e) {
-            const selectedColumn = e.target.dataset.column;
-            const selectedRow = e.target.dataset.row;
+            const spot = e.target.dataset.index;
 
-            if (!selectedColumn && !selectedRow) return;
+            if (!spot) return;
             
-            game.playRound(selectedRow, selectedColumn);
+            game.playRound(spot);
             updateScreen();
         }
 
