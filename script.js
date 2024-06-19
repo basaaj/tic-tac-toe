@@ -73,6 +73,7 @@ function Cell() {
 
 function GameController(playerOneName = "Player One", playerTwoName = "Player Two") {
     const board = Gameboard();
+    let play = true;
 
     const players = [
         {
@@ -97,14 +98,13 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
 
     const setWinner = () => {
         activePlayer.winner = true;
+        play = false;
     }
 
     const playRound = (index) => {
         if (board.placeToken(index, getActivePlayer().token)) {
             if (board.checkWin(getActivePlayer().token)) {
                 setWinner();
-
-                //TODO: Disable game or immediately restart
             }
 
             else {
@@ -114,7 +114,16 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
         }
     };
 
-    return { playRound, getActivePlayer, getBoard: board.getBoard, clearBoard: board.clearBoard };
+    const getState = () => play;
+
+    const reset = () => {
+        play = true;
+        board.clearBoard();
+        activePlayer.winner = false;
+        activePlayer = players[0];
+    };
+
+    return { playRound, getActivePlayer, getBoard: board.getBoard, reset, getState };
 }
   
 function ScreenController() {
@@ -154,7 +163,7 @@ function ScreenController() {
         function clickHandlerBoard(e) {
             const spot = e.target.dataset.index;
 
-            if (!spot) return;
+            if (!spot || !game.getState()) return;
             
             game.playRound(spot);
             updateScreen();
@@ -167,7 +176,7 @@ function ScreenController() {
     updateScreen();
 
     reset.addEventListener('click', () => {
-        game.clearBoard();
+        game.reset();
         updateScreen();
     });
 }
